@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/gorilla/mux"
 )
 
 type Post struct {
@@ -19,6 +21,17 @@ var db, err = sql.Open("mysql", "root:my-secret-pw@(172.17.0.2:3306)/go_course?c
 
 func main() {
 
+	r := mux.NewRouter()
+
+	r.PathPrefix("/static").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("static/"))))
+
+	r.HandleFunc("/", HomeHandler)
+	r.HandleFunc("{id}/view", ViewHandler)
+
+	fmt.Println(http.ListenAndServe(":8080", r))
+}
+
+func ListPosts() []Post {
 	// stmt, err := db.Prepare("Insert into posts(title, body) values(?,?)")
 	// checkError(err)
 
@@ -38,15 +51,29 @@ func main() {
 
 	db.Close()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	return items
+}
 
-		t := template.Must(template.ParseFiles("templates/index.html"))
-		if err := t.ExecuteTemplate(w, "index.html", items); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
+func GetPostById(id string) *Post {
+	row := db.QueryRow("select * from posts where id=?", id)
+	post := Post()
+	row.Scan(&post.Id, &post.Title, &post.Body)
+	return post
+}
 
-	fmt.Println(http.ListenAndServe(":8080", nil))
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	t := template.Must(template.ParseFiles("templates/index.html"))
+	if err := t.ExecuteTemplate(w, "index.html", ListPosts()); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func ViewHandler(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	t := template.Must(template.ParseFiles("templates/view.html"))
+	if err := t.ExecuteTemplate(w, "view.html", GetPostById(id)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func checkError(err error) {
