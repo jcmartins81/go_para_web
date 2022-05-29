@@ -25,7 +25,7 @@ func main() {
 	// _, err = stmt.Exec("My first Post", "My first content")
 	// checkError(err)
 
-	rows, err := db.Query("Seelct * from posts")
+	rows, err := db.Query("Select * from posts")
 	checkError(err)
 
 	items := []Post{}

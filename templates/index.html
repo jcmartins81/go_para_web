@@ -11,13 +11,13 @@
 
     <table class="table table-bordered">
         <tr>
-            <th>ID</th>
+            <th>Id</th>
             <th>Title</th>
             <th>Action</th>
         </tr>
         {{ range $key, $value := . }}
             <tr>
-                <td>{{$value.ID}}</td>
+                <td>{{$value.Id:}}</td>
                 <td>{{$value.Title}}</td>
                 <td>View Post</td>
             </tr>
